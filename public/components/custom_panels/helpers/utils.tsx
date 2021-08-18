@@ -9,5 +9,6 @@
  * GitHub history for details.
  */
 
-export { useFetchEvents } from './useFetchEvents';
-export { useFetchVisualizations } from './useFetchVisualizations';
+export const isNameValid = (name:string)=>{
+    return (name.length >= 50 || name.length === 0) ? false : true;
+}

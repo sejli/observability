@@ -15,7 +15,7 @@ import {
   CoreStart,
   Plugin,
   Logger,
-  ILegacyClusterClient
+  ILegacyClusterClient,
 } from '../../../src/core/server';
 
 import { ObservabilityPluginSetup, ObservabilityPluginStart } from './types';
@@ -33,13 +33,13 @@ export class ObservabilityPlugin implements Plugin<ObservabilityPluginSetup, Obs
   public setup(core: CoreSetup) {
     this.logger.debug('Observability: Setup');
     const router = core.http.createRouter();
-
     const observabilityClient: ILegacyClusterClient = core.opensearch.legacy.createClient(
       'opensearch_observability', 
       {
         'plugins': [PPLPlugin, DSLPlugin]
       }
     );
+
     core.http.registerRouteHandlerContext('observability_plugin', (context, request) => {
       return {
         logger: this.logger,

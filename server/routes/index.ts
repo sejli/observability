@@ -9,8 +9,6 @@
  * GitHub history for details.
  */
 
-// import { schema } from '@osd/config-schema';
-// import { RequestParams } from '@elastic/elasticsearch';
 import { 
   IRouter,
   ILegacyClusterClient
@@ -19,6 +17,7 @@ import { registerPplRoute } from './api/ppl';
 import { registerDslRoute } from './api/dsl';
 import PPLFacet from '../services/facets/pplFacet';
 import DSLFacet from '../services/facets/dslFacet';
+import {CustomPanelsRouter} from './custom_panels_router';
 
 export function setupRoutes({
   router,
@@ -27,6 +26,8 @@ export function setupRoutes({
   router: IRouter
   client: ILegacyClusterClient
 }) {
+
+  CustomPanelsRouter(router);
   const pplFacet = new PPLFacet(client);
   registerPplRoute({ router, facet: pplFacet });
   const dslFacet = new DSLFacet(client);

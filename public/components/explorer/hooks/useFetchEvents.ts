@@ -20,31 +20,47 @@ import {
   SELECTED_FIELDS,
   UNSELECTED_FIELDS
 } from '../../../common/constants/explorer';
-import { fetchSuccess } from '../slices/queryResultSlice';
+import { fetchSuccess, reset as queryResultReset } from '../slices/queryResultSlice';
 import { selectQueries } from '../slices/querySlice';
 import {
   updateFields,
 } from '../slices/fieldSlice';
 
-export const useFetchQueryResponse = ({
+export const useFetchEvents = ({
   pplService,
   requestParams = {}
 }: any) => {
   
   const dispatch = useDispatch();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isEventsLoading, setIsEventsLoading] = useState<boolean>(false);
   const queries = useSelector(selectQueries);
   const queriesRef = useRef();
   queriesRef.current = queries;
-  //const rawQuery = queries[requestParams.tabId][RAW_QUERY];
 
-  const getQueryResponse = async () => {
-    setIsLoading(true);
-    const cur = queriesRef.current;
+  const fetchEvents = async (
+    { query }: any,
+    format: string,
+    handler: any
+  ) => {
+    setIsEventsLoading(true);
     await pplService.fetch({
-      query: cur[requestParams.tabId][RAW_QUERY]
+      query,
+      format,
     })
-    .then((res) => {
+    .then((res: any) => {
+      handler(res);
+    })
+    .catch((err: any) => {
+      console.error(err);
+    })
+    .finally(() => {
+      setIsEventsLoading(false);
+    });
+  };
+
+  const getEvents = () => {
+    const cur = queriesRef.current;
+    fetchEvents({ query: cur[requestParams.tabId][RAW_QUERY] }, 'jdbc', (res) => {
       batch(() => {
         dispatch(fetchSuccess({
           tabId: requestParams.tabId,
@@ -58,18 +74,32 @@ export const useFetchQueryResponse = ({
           }
         }));
       });
-    })
-    .catch((err) => {
-      console.error(err);
-    })
-    .finally(() => {
-      setIsLoading(false);
     });
-  }
+  };
+
+  const getAvailableFields = (query: string) => {
+    fetchEvents({ query, }, 'jdbc', (res) => {
+      batch(() => {
+        dispatch(queryResultReset({
+          tabId: requestParams.tabId
+        }));
+        dispatch(updateFields({
+          tabId: requestParams.tabId,
+          data: {
+            [SELECTED_FIELDS]: [],
+            [UNSELECTED_FIELDS]: [],
+            'availableFields': res?.schema
+          }
+        }));
+      });
+    });
+  };
 
   return {
-    isLoading,
-    getQueryResponse
+    isEventsLoading,
+    getEvents,
+    getAvailableFields,
+    fetchEvents
   };
 };
 

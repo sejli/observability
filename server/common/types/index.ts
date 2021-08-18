@@ -9,8 +9,20 @@
  * GitHub history for details.
  */
 
-import React from 'react';
+export interface ISchema {
+  name: string,
+  type: string
+}
 
-export const Home = () => {
-  return <h1>Operational panels home</h1>;
-};
+export interface IPPLVisualizationDataSource {
+  data: any;
+  metadata: any;
+  size: Number;
+  status: Number;
+}
+
+export interface IPPLEventsDataSource {
+  schema: Array<ISchema>;
+  datarows: Array<any>;
+  jsonData?: Array<any>;
+}
