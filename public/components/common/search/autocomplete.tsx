@@ -301,6 +301,8 @@ export function Autocomplete(props: IQueryBarProps) {
     return dataValues;
   }
 
+  //console.log(dslService);
+
   // ------------------ REFACTORING
   const getSuggestions2 = (str: string) => {
     //const pipes = str.split('|');
