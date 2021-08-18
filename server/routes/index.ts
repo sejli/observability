@@ -32,5 +32,4 @@ export function setupRoutes({
   registerPplRoute({ router, facet: pplFacet });
   const dslFacet = new DSLFacet(client);
   registerDslRoute({ router, facet: dslFacet})
-  console.log('registered DSL route')
 };
