@@ -28,9 +28,10 @@ import { observabilityTitle } from '../../common/constants/shared';
 interface ObservabilityAppDeps {
   CoreStart: CoreStart;
   pplService: any;
+  dslService: any;
 }
 
-export const App = ({ CoreStart, pplService }: ObservabilityAppDeps) => {
+export const App = ({ CoreStart, pplService, dslService }: ObservabilityAppDeps) => {
   const { chrome, http } = CoreStart;
   const parentBreadcrumb = {
     text: observabilityTitle,
@@ -86,8 +87,11 @@ export const App = ({ CoreStart, pplService }: ObservabilityAppDeps) => {
                       href: '#/explorer/home',
                     },
                   ]);
-                  return renderPageWithSidebar(<EventExplorerHome />, 3);
-                }}
+                  return renderPageWithSidebar(<EventExplorerHome
+                    pplService = {pplService}
+                    dslService = {dslService} 
+                    />, 3);
+                } }
               />
               <Route
                 exact
@@ -119,8 +123,11 @@ export const App = ({ CoreStart, pplService }: ObservabilityAppDeps) => {
               />
               <Route
                 exact
-                path="/explorer/events"
-                render={(props) => <LogExplorer pplService={pplService} />}
+                path='/event/explorer'
+                render={(props) => <LogExplorer
+                  pplService={ pplService }
+                  dslService={ dslService }
+                /> }
               />
             </Switch>
           </>

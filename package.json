@@ -13,7 +13,9 @@
   "dependencies": {
     "@reduxjs/toolkit": "^1.6.1",
     "plotly.js-dist": "^2.2.0",
-    "react-plotly.js": "^2.5.1"
+    "react-plotly.js": "^2.5.1",
+    "@algolia/autocomplete-js": "^1.2.1",
+    "@algolia/autocomplete-theme-classic": "^1.2.1"
   },
   "devDependencies": {
     "cypress": "^5.0.0"

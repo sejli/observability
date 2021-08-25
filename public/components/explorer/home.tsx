@@ -29,11 +29,11 @@ import {
   EuiFlexGroup,
   EuiFlexItem
 } from '@elastic/eui';
-import { Search } from '../common/seach/search';
+import { Search } from '../common/search/search';
 import { RAW_QUERY } from '../../../common/constants/explorer';
 
 export const Home = (props: any) => {
-
+  const {pplService, dslService} = props;
   const history = useHistory();
   const dispatch = useDispatch();
   const query = useSelector(selectQueries)[initialTabId][RAW_QUERY];
@@ -101,6 +101,8 @@ export const Home = (props: any) => {
           handleQuerySearch={ () => {
             history.push('/explorer/events');
           } }
+          pplService = { pplService }
+          dslService = { dslService }
           startTime={ 'now-15m' }
           endTime={ 'now' }
           setStartTime={ () => {} }

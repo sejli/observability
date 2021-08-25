@@ -16,6 +16,8 @@ import {
 import { registerPplRoute } from './ppl';
 import PPLFacet from '../services/facets/ppl_facet';
 import {CustomPanelsRouter} from './custom_panels_router';
+import { registerDslRoute } from './dsl';
+import DSLFacet from '../services/facets/dslFacet';
 
 export function setupRoutes({
   router,
@@ -28,4 +30,6 @@ export function setupRoutes({
   CustomPanelsRouter(router);
   const pplFacet = new PPLFacet(client);
   registerPplRoute({ router, facet: pplFacet });
+  const dslFacet = new DSLFacet(client);
+  registerDslRoute({ router, facet: dslFacet})
 };

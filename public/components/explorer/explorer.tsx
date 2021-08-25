@@ -24,7 +24,7 @@ import {
   EuiFlexItem
 } from '@elastic/eui';
 import classNames from 'classnames';
-import { Search } from '../common/seach/search';
+import { Search } from '../common/search/search';
 import { CountDistribution } from './visualizations/count_distribution';
 import { DataGrid } from './data_grid';
 import { Sidebar } from './sidebar';
@@ -69,6 +69,7 @@ interface IExplorerProps {
 
 export const Explorer = ({
   pplService,
+  dslService,
   tabId
 }: IExplorerProps) => {
 
@@ -439,6 +440,8 @@ export const Explorer = ({
         query={ query }
         handleQueryChange={ (query: string) => { handleQueryChange(query, tabId) } }
         handleQuerySearch={ () => { handleQuerySearch(tabId) } }
+        pplService = { pplService }
+        dslService = { dslService }
         startTime={ startTime }
         endTime={ endTime }
         setStartTime={ setStartTime }
