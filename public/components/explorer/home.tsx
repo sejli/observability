@@ -33,6 +33,7 @@ import { Search } from '../common/search/search';
 import { RAW_QUERY } from '../../../common/constants/explorer';
 
 export const Home = (props: any) => {
+
   const {pplService, dslService} = props;
   const history = useHistory();
   const dispatch = useDispatch();

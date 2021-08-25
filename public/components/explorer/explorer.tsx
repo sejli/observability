@@ -64,6 +64,7 @@ const TAB_CHART_ID = _.uniqueId(TAB_CHART_ID_TXT_PFX);
 
 interface IExplorerProps {
   pplService: any;
+  dslService: any;
   tabId: string
 }
 
@@ -72,6 +73,8 @@ export const Explorer = ({
   dslService,
   tabId
 }: IExplorerProps) => {
+
+  console.log('in explorer')
 
   const dispatch = useDispatch();
 
