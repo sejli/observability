@@ -123,7 +123,7 @@ export const App = ({ CoreStart, pplService, dslService }: ObservabilityAppDeps)
               />
               <Route
                 exact
-                path='/event/explorer'
+                path='/explorer/events'
                 render={(props) => <LogExplorer
                   pplService={ pplService }
                   dslService={ dslService }

@@ -74,8 +74,6 @@ export const Explorer = ({
   tabId
 }: IExplorerProps) => {
 
-  console.log('in explorer')
-
   const dispatch = useDispatch();
 
   const requestParams = {
@@ -442,7 +440,7 @@ export const Explorer = ({
       <Search
         query={ query }
         handleQueryChange={ (query: string) => { handleQueryChange(query, tabId) } }
-        handleQuerySearch={ () => { handleQuerySearch(tabId) } }
+        handleQuerySearch={ () => { handleQuerySearch() } }
         pplService = { pplService }
         dslService = { dslService }
         startTime={ startTime }
