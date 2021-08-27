@@ -128,6 +128,7 @@ export function Autocomplete(props: IQueryBarProps) {
         );
       } else if (indexList.includes(splittedModel[splittedModel.length - 2])) {
         // console.log('getting fields')
+        currIndex = splittedModel[splittedModel.length - 2]
         getFields();
         return [{ label: str + '|', input: str, suggestion: '|' }].filter(
           ({ label }) => label.startsWith(prefix) && prefix !== label

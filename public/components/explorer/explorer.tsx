@@ -9,7 +9,7 @@
  * GitHub history for details.
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import _ from 'lodash';
 import { 
@@ -97,6 +97,8 @@ export const Explorer = ({
   });
 
   const query = useSelector(selectQueries)[tabId][RAW_QUERY];
+  const queryRef = useRef();
+  queryRef.current = query;
   const explorerData = useSelector(selectQueryResult)[tabId];
   const explorerFields = useSelector(selectFields)[tabId];
   const countDistribution = useSelector(selectCountDistribution)[tabId];
@@ -117,9 +119,10 @@ export const Explorer = ({
   );
 
   const fetchData = () => {
-    if (!query) return;
-    if (query.match(/\|\s*stats/i)) {
-      const index = getIndexPatternFromRawQuery(query);
+    const searchQuery = queryRef.current;
+    if (!searchQuery) return;
+    if (searchQuery.match(/\|\s*stats/i)) {
+      const index = getIndexPatternFromRawQuery(searchQuery);
       if (!index) return;
       getAvailableFields(`search source=${index}`);
       getVisualizations();
