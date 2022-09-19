@@ -15,20 +15,35 @@ import org.opensearch.action.get.GetRequest
 import org.opensearch.action.get.GetResponse
 import org.opensearch.action.get.MultiGetRequest
 import org.opensearch.action.index.IndexRequest
+import org.opensearch.action.search.SearchRequest
 import org.opensearch.client.Client
 import org.opensearch.cluster.service.ClusterService
+import org.opensearch.common.unit.TimeValue
 import org.opensearch.common.xcontent.LoggingDeprecationHandler
 import org.opensearch.common.xcontent.NamedXContentRegistry
 import org.opensearch.common.xcontent.XContentType
 import org.opensearch.index.IndexNotFoundException
+import org.opensearch.index.query.QueryBuilders
 import org.opensearch.observability.ObservabilityPlugin.Companion.LOG_PREFIX
+import org.opensearch.observability.collaboration.action.GetCollaborationObjectRequest
 import org.opensearch.observability.collaboration.model.CollaborationObjectDoc
 import org.opensearch.observability.collaboration.model.CollaborationObjectDocInfo
+import org.opensearch.observability.collaboration.model.CollaborationObjectSearchResult
+import org.opensearch.observability.model.RestTag.ACCESS_LIST_FIELD
+import org.opensearch.observability.model.RestTag.TENANT_FIELD
+import org.opensearch.observability.model.SearchResults
 import org.opensearch.observability.settings.PluginSettings
 import org.opensearch.observability.util.SecureIndexClient
 import org.opensearch.observability.util.logger
 import org.opensearch.rest.RestStatus
+import org.opensearch.search.SearchHit
+import org.opensearch.search.builder.SearchSourceBuilder
+import java.util.concurrent.TimeUnit
 
+/**
+ * Class for doing OpenSearch index operation to maintain collaboration objects in cluster.
+ */
+@Suppress("TooManyFunctions")
 internal object CollaborationIndex {
     private val log by logger(CollaborationIndex::class.java)
     private const val COLLABORATIONS_INDEX_NAME = ".opensearch-collaborations"
@@ -38,6 +53,18 @@ internal object CollaborationIndex {
     private var mappingsUpdated: Boolean = false
     private lateinit var client: Client
     private lateinit var clusterService: ClusterService
+
+    private val searchHitParser = object : SearchResults.SearchHitParser<CollaborationObjectDoc> {
+        override fun parse(searchHit: SearchHit): CollaborationObjectDoc {
+            val parser = XContentType.JSON.xContent().createParser(
+                NamedXContentRegistry.EMPTY,
+                LoggingDeprecationHandler.INSTANCE,
+                searchHit.sourceAsString
+            )
+            parser.nextToken()
+            return CollaborationObjectDoc.parse(parser, searchHit.id)
+        }
+    }
 
     /**
      * Initialize the class
@@ -189,6 +216,49 @@ internal object CollaborationIndex {
         } else {
             response.id
         }
+    }
+
+    /**
+     * Get all observability objects
+     *
+     * @param tenant
+     * @param access
+     * @param request
+     * @return [ObservabilityObjectSearchResult]
+     */
+    fun getAllCollaborationObjects(
+        tenant: String,
+        access: List<String>,
+        request: GetCollaborationObjectRequest
+    ): CollaborationObjectSearchResult {
+        createIndex()
+        val queryHelper = CollaborationQueryHelper(request.types)
+        val sourceBuilder = SearchSourceBuilder()
+            .timeout(TimeValue(PluginSettings.operationTimeoutMs, TimeUnit.MILLISECONDS))
+            .size(request.maxItems)
+            .from(request.fromIndex)
+        queryHelper.addSortField(sourceBuilder, request.sortField, request.sortOrder)
+
+        val query = QueryBuilders.boolQuery()
+        query.filter(QueryBuilders.termsQuery(TENANT_FIELD, tenant))
+        if (access.isNotEmpty()) {
+            query.filter(QueryBuilders.termsQuery(ACCESS_LIST_FIELD, access))
+        }
+        queryHelper.addTypeFilters(query)
+        queryHelper.addQueryFilters(query, request.filterParams)
+        sourceBuilder.query(query)
+        val searchRequest = SearchRequest()
+            .indices(COLLABORATIONS_INDEX_NAME)
+            .source(sourceBuilder)
+        val actionFuture = client.search(searchRequest)
+        val response = actionFuture.actionGet(PluginSettings.operationTimeoutMs)
+        val result = CollaborationObjectSearchResult(request.fromIndex.toLong(), response, searchHitParser)
+        log.info(
+            "$LOG_PREFIX:getAllCollaborationObjects types:${request.types} from ${request.fromIndex}, maxItems:${request.maxItems}," +
+                " sortField:${request.sortField}, sortOrder=${request.sortOrder}, filters=${request.filterParams}" +
+                " retCount:${result.objectList.size}, totalCount:${result.totalHits}"
+        )
+        return result
     }
 
     /**

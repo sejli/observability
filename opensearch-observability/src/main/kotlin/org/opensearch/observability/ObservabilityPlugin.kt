@@ -28,6 +28,7 @@ import org.opensearch.observability.action.GetObservabilityObjectAction
 import org.opensearch.observability.action.UpdateObservabilityObjectAction
 import org.opensearch.observability.collaboration.action.CreateCollaborationObjectAction
 import org.opensearch.observability.collaboration.action.DeleteCollaborationObjectAction
+import org.opensearch.observability.collaboration.action.GetCollaborationObjectAction
 import org.opensearch.observability.index.CollaborationIndex
 import org.opensearch.observability.index.ObservabilityIndex
 import org.opensearch.observability.resthandler.CollaborationsRestHandler
@@ -132,6 +133,10 @@ class ObservabilityPlugin : Plugin(), ActionPlugin, JobSchedulerExtension {
             ActionPlugin.ActionHandler(
                 CreateCollaborationObjectAction.ACTION_TYPE,
                 CreateCollaborationObjectAction::class.java
+            ),
+            ActionPlugin.ActionHandler(
+                GetCollaborationObjectAction.ACTION_TYPE,
+                GetCollaborationObjectAction::class.java
             ),
             ActionPlugin.ActionHandler(
                 DeleteCollaborationObjectAction.ACTION_TYPE,

@@ -9,6 +9,7 @@ import org.opensearch.OpenSearchStatusException
 import org.opensearch.commons.authuser.User
 import org.opensearch.observability.ObservabilityPlugin
 import org.opensearch.observability.collaboration.model.CollaborationObjectDoc
+import org.opensearch.observability.collaboration.model.CollaborationObjectSearchResult
 import org.opensearch.observability.index.CollaborationIndex
 import org.opensearch.observability.security.UserAccessManager
 import org.opensearch.observability.util.logger
@@ -46,6 +47,112 @@ internal object CollaborationActions {
             RestStatus.INTERNAL_SERVER_ERROR
         )
         return CreateCollaborationObjectResponse(docId)
+    }
+
+    /**
+     * Get ObservabilityObject info
+     * @param request [GetObservabilityObjectRequest] object
+     * @return [GetObservabilityObjectResponse]
+     */
+    fun get(request: GetCollaborationObjectRequest, user: User?): GetCollaborationObjectResponse {
+        log.info("${ObservabilityPlugin.LOG_PREFIX}: CollaborationObject-get ${request.objectIds}")
+        UserAccessManager.validateUser(user)
+        return when (request.objectIds.size) {
+            0 -> getAll(request, user)
+            1 -> info(request.objectIds.first(), user)
+            else -> info(request.objectIds, user)
+        }
+    }
+
+    /**
+     * Get ObservabilityObject info
+     * @param objectId object id
+     * @param user the user info object
+     * @return [GetObservabilityObjectResponse]
+     */
+    private fun info(collaborationId: String, user: User?): GetCollaborationObjectResponse {
+        log.info("${ObservabilityPlugin.LOG_PREFIX}:CollaborationObject-get $collaborationId")
+        val collaborationObjectDocInfo = CollaborationIndex.getCollaborationObject(collaborationId)
+        collaborationObjectDocInfo
+            ?: run {
+                throw OpenSearchStatusException(
+                    "CollaborationObject $collaborationId not found",
+                    RestStatus.NOT_FOUND
+                )
+            }
+        val currentDoc = collaborationObjectDocInfo.collaborationObjectDoc
+        if (!UserAccessManager.doesUserHasAccess(user, currentDoc.tenant, currentDoc.access)) {
+            throw OpenSearchStatusException(
+                "Permission denied for CollaborationObject $collaborationId",
+                RestStatus.FORBIDDEN
+            )
+        }
+        val docInfo = CollaborationObjectDoc(
+            collaborationId,
+            currentDoc.updatedTime,
+            currentDoc.createdTime,
+            currentDoc.tenant,
+            currentDoc.access,
+            currentDoc.type,
+            currentDoc.objectData
+        )
+        return GetCollaborationObjectResponse(
+            CollaborationObjectSearchResult(docInfo),
+            UserAccessManager.hasAllInfoAccess(user)
+        )
+    }
+
+    private fun info(collaborationIds: Set<String>, user: User?): GetCollaborationObjectResponse {
+        log.info("${ObservabilityPlugin.LOG_PREFIX}: CollaborationObject-info $collaborationIds")
+        val objectDocs = CollaborationIndex.getCollaborationObjects(collaborationIds)
+        if (objectDocs.size != collaborationIds.size) {
+            val mutableSet = collaborationIds.toMutableSet()
+            objectDocs.forEach { mutableSet.remove(it.id) }
+            throw OpenSearchStatusException(
+                "CollaborationObject $mutableSet not found",
+                RestStatus.NOT_FOUND
+            )
+        }
+        objectDocs.forEach {
+            val currentDoc = it.collaborationObjectDoc
+            if (!UserAccessManager.doesUserHasAccess(user, currentDoc.tenant, currentDoc.access)) {
+                throw OpenSearchStatusException(
+                    "Permission denied for CollaborationObject ${it.id}",
+                    RestStatus.FORBIDDEN
+                )
+            }
+        }
+        val configSearchResult = objectDocs.map {
+            CollaborationObjectDoc(
+                it.id!!,
+                it.collaborationObjectDoc.updatedTime,
+                it.collaborationObjectDoc.createdTime,
+                it.collaborationObjectDoc.tenant,
+                it.collaborationObjectDoc.access,
+                it.collaborationObjectDoc.type,
+                it.collaborationObjectDoc.objectData
+            )
+        }
+        return GetCollaborationObjectResponse(
+            CollaborationObjectSearchResult(configSearchResult),
+            UserAccessManager.hasAllInfoAccess(user)
+        )
+    }
+
+    /**
+     * Get all ObservabilityObject matching the criteria
+     * @param request [GetObservabilityObjectRequest] object
+     * @param user the user info object
+     * @return [GetObservabilityObjectResponse]
+     */
+    private fun getAll(request: GetCollaborationObjectRequest, user: User?): GetCollaborationObjectResponse {
+        log.info("${ObservabilityPlugin.LOG_PREFIX}: CollaborationObject-getAll")
+        val searchResult = CollaborationIndex.getAllCollaborationObjects(
+            UserAccessManager.getUserTenant(user),
+            UserAccessManager.getSearchAccessInfo(user),
+            request
+        )
+        return GetCollaborationObjectResponse(searchResult, UserAccessManager.hasAllInfoAccess(user))
     }
 
     /**
